@@ -1,0 +1,25 @@
+name: thelook
+version: "1.0.0"
+profile: thelook
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  thelook:
+    # Bronze: views over the public source (no data copied)
+    staging:
+      +schema: raw
+      +materialized: view
+    # Silver: cleaned and conformed
+    core:
+      +schema: core
+      +materialized: table
+    # Gold: star schema with enforced contracts
+    marts:
+      +schema: mart
+      +materialized: table
+      +contract:
+        enforced: true

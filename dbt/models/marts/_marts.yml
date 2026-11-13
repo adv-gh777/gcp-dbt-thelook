@@ -1,0 +1,104 @@
+models:
+  - name: fct_order_items
+    description: Fact table, grain = one order item. Revenue excludes cancelled/returned items.
+    constraints:
+      - type: primary_key        # informational only: BigQuery does not enforce PKs (used by the optimizer)
+        warn_unenforced: false
+        columns: [order_item_id]
+    columns:
+      - name: order_item_id
+        data_type: int64
+        constraints: [{type: not_null}]
+        data_tests: [unique]
+      - name: order_id
+        data_type: int64
+        constraints: [{type: not_null}]
+      - name: customer_id
+        data_type: int64
+        constraints: [{type: not_null}]
+        data_tests:
+          - relationships:
+              arguments: {to: ref('dim_customers'), field: customer_id}
+      - name: product_id
+        data_type: int64
+        constraints: [{type: not_null}]
+        data_tests:
+          - relationships:
+              arguments: {to: ref('dim_products'), field: product_id}
+      - name: order_date
+        data_type: date
+        constraints: [{type: not_null}]
+        data_tests:
+          - relationships:
+              arguments: {to: ref('dim_date'), field: date_day}
+      - name: ordered_at
+        data_type: timestamp
+      - name: item_status
+        data_type: string
+      - name: sale_price
+        data_type: "numeric(38, 9)"
+        constraints: [{type: not_null}]
+      - name: unit_cost
+        data_type: "numeric(38, 9)"
+      - name: is_revenue
+        data_type: bool
+      - name: net_revenue
+        data_type: "numeric(38, 9)"
+        constraints: [{type: not_null}]
+
+  - name: dim_customers
+    constraints:
+      - type: primary_key
+        warn_unenforced: false
+        columns: [customer_id]
+    columns:
+      - name: customer_id
+        data_type: int64
+        constraints: [{type: not_null}]
+        data_tests: [unique]
+      - {name: age, data_type: int64}
+      - {name: gender, data_type: string}
+      - {name: city, data_type: string}
+      - {name: state, data_type: string}
+      - {name: country, data_type: string}
+      - {name: traffic_source, data_type: string}
+      - {name: signup_date, data_type: date}
+
+  - name: dim_products
+    constraints:
+      - type: primary_key
+        warn_unenforced: false
+        columns: [product_id]
+    columns:
+      - name: product_id
+        data_type: int64
+        constraints: [{type: not_null}]
+        data_tests: [unique]
+      - {name: product_name, data_type: string}
+      - {name: brand, data_type: string}
+      - {name: category, data_type: string}
+      - {name: department, data_type: string}
+      - {name: retail_price, data_type: "numeric(38, 9)"}
+      - {name: unit_cost, data_type: "numeric(38, 9)"}
+
+  - name: dim_date
+    time_spine:
+      standard_granularity_column: date_day
+    constraints:
+      - type: primary_key
+        warn_unenforced: false
+        columns: [date_day]
+    columns:
+      - name: date_day
+        data_type: date
+        granularity: day
+        constraints: [{type: not_null}]
+        data_tests: [unique]
+      - {name: year, data_type: int64}
+      - {name: quarter, data_type: int64}
+      - {name: month, data_type: int64}
+      - {name: month_name, data_type: string}
+      - {name: month_start, data_type: date}
+      - {name: iso_week, data_type: int64}
+      - {name: day_name, data_type: string}
+      - {name: is_weekend, data_type: bool}

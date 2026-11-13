@@ -1,0 +1,16 @@
+# No secrets here: auth is your own ADC (gcloud auth application-default login),
+# impersonating the least-privilege dbt service account created by Terraform.
+thelook:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('GCP_PROJECT') }}"
+      impersonate_service_account: "dbt-runner@{{ env_var('GCP_PROJECT') }}.iam.gserviceaccount.com"
+      dataset: core            # default; layers override via +schema
+      location: US             # must match bigquery-public-data.thelook_ecommerce
+      threads: 4
+      priority: interactive
+      job_execution_timeout_seconds: 300
+      maximum_bytes_billed: 1000000000   # hard cap: any query scanning > 1 GB fails
