@@ -1,0 +1,4 @@
+project_id         = "your-project-id"
+billing_account_id = "XXXXXX-XXXXXX-XXXXXX"
+developer_email    = "you@example.com"
+# budget_amount    = 5

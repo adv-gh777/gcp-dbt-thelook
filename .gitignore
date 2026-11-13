@@ -1,0 +1,25 @@
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+
+# Credentials — never commit
+*.json
+!**/package.json
+*.pem
+*.key
+.env
+
+# Python / dbt
+.venv/
+__pycache__/
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+logs/
+.user.yml
+
+.DS_Store
