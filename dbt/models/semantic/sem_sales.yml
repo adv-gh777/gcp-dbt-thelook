@@ -1,0 +1,87 @@
+semantic_models:
+  - name: order_items
+    description: Order-item sales facts.
+    model: ref('fct_order_items')
+    defaults:
+      agg_time_dimension: order_date
+    entities:
+      - name: order_item
+        type: primary
+        expr: order_item_id
+      - name: sales_order
+        type: foreign
+        expr: order_id
+      - name: customer
+        type: foreign
+        expr: customer_id
+      - name: product
+        type: foreign
+        expr: product_id
+    dimensions:
+      - name: order_date
+        type: time
+        type_params:
+          time_granularity: day
+      - name: item_status
+        type: categorical
+    measures:
+      - name: net_revenue
+        agg: sum
+      - name: order_count
+        agg: count_distinct
+        expr: order_id
+      - name: customer_count
+        agg: count_distinct
+        expr: customer_id
+
+  - name: customers
+    model: ref('dim_customers')
+    entities:
+      - name: customer
+        type: primary
+        expr: customer_id
+    dimensions:
+      - {name: country, type: categorical}
+      - {name: gender, type: categorical}
+      - {name: traffic_source, type: categorical}
+
+  - name: products
+    model: ref('dim_products')
+    entities:
+      - name: product
+        type: primary
+        expr: product_id
+    dimensions:
+      - {name: category, type: categorical}
+      - {name: brand, type: categorical}
+      - {name: department, type: categorical}
+
+metrics:
+  - name: revenue
+    label: Revenue
+    description: Sum of sale price, excluding cancelled and returned items.
+    type: simple
+    type_params:
+      measure: net_revenue
+
+  - name: orders
+    label: Orders
+    description: Distinct orders (all statuses).
+    type: simple
+    type_params:
+      measure: order_count
+
+  - name: customers
+    label: Customers
+    description: Distinct ordering customers.
+    type: simple
+    type_params:
+      measure: customer_count
+
+  - name: average_order_value
+    label: Average order value
+    description: Revenue / orders.
+    type: ratio
+    type_params:
+      numerator: revenue
+      denominator: orders
