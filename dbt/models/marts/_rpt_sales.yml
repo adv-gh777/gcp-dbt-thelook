@@ -1,0 +1,11 @@
+models:
+  - name: rpt_sales
+    description: >
+      One-big-table for Looker Studio: fct_order_items joined to its dimensions.
+      Not a star-schema member; contract not enforced.
+    config:
+      contract:
+        enforced: false
+    columns:
+      - name: order_item_id
+        data_tests: [unique, not_null]

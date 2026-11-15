@@ -1,26 +1,21 @@
-# Looker Studio dashboard
+# Data Studio (formerly Looker Studio) dashboard
 
-A one-page dashboard on the `mart` star schema. About 15 minutes of clicking.
+A one-page dashboard on the `mart` layer. About 15 minutes of clicking.
 
 > Open-source MetricFlow has no BI connector (the hosted Semantic Layer APIs are dbt platform only).
-> So Looker Studio reads the marts directly, and the four metrics are re-created below
+> So Data Studio reads the marts directly, and the four metrics are re-created below
 > with the **same definitions** as `dbt/models/semantic/sem_sales.yml`.
 
-## 1. Data source (blended star schema)
+## 1. Data source
 
-1. Go to <https://lookerstudio.google.com> → **Create → Report**.
-2. Choose the **BigQuery** connector → **My projects** → your project → dataset `mart` → table `fct_order_items` → **Add**.
-3. Add three more BigQuery sources the same way: `dim_customers`, `dim_products`, `dim_date`.
-4. **Resource → Manage blends → Add a blend**:
-   - Left table: `fct_order_items`, all columns.
-   - Join `dim_customers` with **Left outer** on `customer_id = customer_id`; keep `country`, `gender`, `traffic_source`.
-   - Join `dim_products` with **Left outer** on `product_id = product_id`; keep `category`, `brand`, `department`.
-   - Join `dim_date` with **Left outer** on `order_date = date_day`; keep `month_start`, `year`.
-   - Name it `sales` → **Save**.
+1. Go to <https://datastudio.google.com> → **Create → Report**. On first use, complete the account setup; *Company* is required, but any value works.
+2. Choose the **BigQuery** connector → **My projects** → your project → dataset `mart` → table **`rpt_sales`** → **Add**.
+
+`rpt_sales` is the star schema pre-joined into one wide table, one row per order item. Data Studio blends aggregate each table separately before joining, which is easy to get wrong, so BI reads a single table instead. A dbt test checks that its row count and revenue equal `fct_order_items`.
 
 ## 2. Calculated fields (match the dbt metric definitions)
 
-On the `sales` blend, **Add a field** for each:
+**Resource → Manage added data sources → rpt_sales → Edit → Add a field** for each:
 
 | Field | Formula |
 |---|---|

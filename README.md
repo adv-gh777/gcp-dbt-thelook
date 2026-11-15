@@ -1,6 +1,6 @@
-# thelook on BigQuery: dbt + MetricFlow + Looker Studio
+# thelook on BigQuery: dbt + MetricFlow + Data Studio
 
-A personal learning project: a small but complete analytics pipeline on Google Cloud, built to get hands-on with BigQuery, dbt, MetricFlow and Looker Studio, with all infrastructure in Terraform. It is deliberately minimal and not production-hardened.
+A personal learning project: a small but complete analytics pipeline on Google Cloud, built to get hands-on with BigQuery, dbt, MetricFlow and Data Studio (formerly Looker Studio), with all infrastructure in Terraform. It is deliberately minimal and not production-hardened.
 
 Data: [`bigquery-public-data.thelook_ecommerce`](https://console.cloud.google.com/marketplace/product/bigquery-public-data/thelook-ecommerce), a synthetic e-commerce dataset (about 125k orders, 181k order items, 100k users, 29k products) that Google regenerates continuously.
 
@@ -23,7 +23,7 @@ flowchart LR
     src -- read in place --> raw --> core --> mart
     sa -. builds .-> raw & core & mart
     mart --> mf[MetricFlow<br/>semantic layer]
-    mart --> ls[Looker Studio<br/>dashboard]
+    mart --> ls[Data Studio<br/>dashboard]
 ```
 
 ## Stack
@@ -34,7 +34,7 @@ flowchart LR
 | Warehouse | BigQuery (US multi-region) | n/a |
 | Transformation | dbt Core + dbt-bigquery | 1.12 |
 | Semantic layer | MetricFlow (`dbt-metricflow`, Apache 2.0) | 0.213 |
-| BI | Looker Studio | n/a |
+| BI | Data Studio (formerly Looker Studio) | n/a |
 
 dbt Core v1 was chosen over the newer dbt v2 (Fusion) because open-source MetricFlow runs on dbt Core.
 
@@ -44,7 +44,7 @@ dbt Core v1 was chosen over the newer dbt v2 (Fusion) because open-source Metric
 |---|---|---|---|
 | `raw` | Bronze | views | `stg_*`: renamed and typed 1:1 views over the public tables. Nothing is copied. PII (names, email, street address) is dropped here. |
 | `core` | Silver | tables | `core_*`: conformed entities; order items enriched with order status, product cost and the net-revenue rule. |
-| `mart` | Gold | tables, enforced contracts | Star schema: `fct_order_items` (grain: one order item), `dim_customers`, `dim_products`, `dim_date`. |
+| `mart` | Gold | tables, enforced contracts | Star schema: `fct_order_items` (grain: one order item), `dim_customers`, `dim_products`, `dim_date`. Plus `rpt_sales`, the star pre-joined into one wide table for BI. |
 
 - **Dataset location:** all datasets are in `US` because BigQuery cannot join across locations, and the public dataset is in `US`.
 - **Dataset names:** a `generate_schema_name` override writes models to the Terraform-managed datasets by name, instead of dbt's default `<target>_<schema>` prefixing.
@@ -64,7 +64,7 @@ Defined in [`dbt/models/semantic/sem_sales.yml`](dbt/models/semantic/sem_sales.y
 
 Metrics can be sliced by `order_date`, `item_status`, `customer__country`, `customer__gender`, `customer__traffic_source`, `product__category`, `product__brand` and `product__department`.
 
-Open-source MetricFlow compiles metrics to SQL locally (`mf query`). The hosted Semantic Layer APIs that BI tools connect to are a dbt platform feature, so Looker Studio reads the marts directly and re-creates the same four definitions as calculated fields (see [docs/looker-studio.md](docs/looker-studio.md)).
+Open-source MetricFlow compiles metrics to SQL locally (`mf query`). The hosted Semantic Layer APIs that BI tools connect to are a dbt platform feature, so Data Studio reads `rpt_sales` directly and re-creates the same four definitions as calculated fields (see [docs/looker-studio.md](docs/looker-studio.md)).
 
 ## Access model
 
@@ -81,14 +81,15 @@ Open-source MetricFlow compiles metrics to SQL locally (`mf query`). The hosted 
 
 ## Tests
 
-`dbt build` runs 24 data tests:
+`dbt build` runs 27 data tests:
 
 - **Generic:**
   - `unique` and `not_null` on every primary key across the staging, core and mart layers.
   - `accepted_values` on item status.
   - `relationships` from the fact to all three dimensions, including `order_date → dim_date`.
 - **Reconciliation:** [`assert_mart_revenue_reconciles_to_source`](dbt/tests/assert_mart_revenue_reconciles_to_source.sql) checks that the fact's row count and total `sale_price` exactly match the public source, to the cent. Because the source is regenerated continuously, the test compares only source rows up to the fact's latest timestamp.
-- **Model contracts:** contracts are enforced on all marts, so column names and types are checked at build time.
+- **Reporting table:** `assert_rpt_sales_matches_fact` checks that `rpt_sales` neither drops nor duplicates rows or revenue.
+- **Model contracts:** contracts are enforced on the star-schema marts, so column names and types are checked at build time.
   - `not_null` constraints are enforced by BigQuery.
   - Primary keys are declared, but BigQuery does not enforce them; they are informational only and used by the optimizer. Uniqueness is covered by the `unique` tests.
 
@@ -142,5 +143,5 @@ dbt/
   models/semantic MetricFlow semantic models and metrics
   tests/          reconciliation test
   macros/         schema naming override
-docs/             Looker Studio walkthrough
+docs/             Data Studio walkthrough
 ```
