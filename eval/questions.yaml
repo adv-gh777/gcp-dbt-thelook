@@ -1,0 +1,212 @@
+# Eval set for the analytics agent.
+# Each item: question, category, answer type (scalar | rows | top1), hand-written ground-truth SQL.
+# `expected` is filled in by `eval/run_eval.py --refresh-expected` from the current marts.
+# Periods are fixed (e.g. 2024) so answers stay stable between dbt builds.
+# {p} is replaced with the GCP project id.
+
+- id: q01
+  category: simple
+  type: scalar
+  question: What is total revenue across all time?
+  sql: select sum(net_revenue) as value from `{p}.mart.fct_order_items`
+
+- id: q02
+  category: simple
+  type: scalar
+  question: How many orders have been placed in total?
+  sql: select count(distinct order_id) as value from `{p}.mart.fct_order_items`
+
+- id: q03
+  category: simple
+  type: scalar
+  question: How many customers have placed at least one order?
+  sql: select count(distinct customer_id) as value from `{p}.mart.fct_order_items`
+
+- id: q04
+  category: simple
+  type: scalar
+  question: What is the overall average order value?
+  sql: select sum(net_revenue) / count(distinct order_id) as value from `{p}.mart.fct_order_items`
+
+- id: q05
+  category: time
+  type: scalar
+  question: What was revenue in 2024?
+  sql: |
+    select sum(net_revenue) as value from `{p}.mart.fct_order_items`
+    where order_date between '2024-01-01' and '2024-12-31'
+
+- id: q06
+  category: time
+  type: scalar
+  question: How many orders were placed in 2025?
+  sql: |
+    select count(distinct order_id) as value from `{p}.mart.fct_order_items`
+    where order_date between '2025-01-01' and '2025-12-31'
+
+- id: q07
+  category: time
+  type: scalar
+  question: What was the average order value in 2023?
+  sql: |
+    select sum(net_revenue) / count(distinct order_id) as value from `{p}.mart.fct_order_items`
+    where order_date between '2023-01-01' and '2023-12-31'
+
+- id: q08
+  category: time
+  type: scalar
+  question: What was revenue in March 2025?
+  sql: |
+    select sum(net_revenue) as value from `{p}.mart.fct_order_items`
+    where order_date between '2025-03-01' and '2025-03-31'
+
+- id: q09
+  category: time
+  type: scalar
+  question: How many distinct customers ordered in 2025?
+  sql: |
+    select count(distinct customer_id) as value from `{p}.mart.fct_order_items`
+    where order_date between '2025-01-01' and '2025-12-31'
+
+- id: q10
+  category: breakdown
+  type: rows
+  question: What was revenue for each year from 2021 to 2025?
+  sql: |
+    select cast(extract(year from order_date) as string) as label, sum(net_revenue) as value
+    from `{p}.mart.fct_order_items`
+    where order_date between '2021-01-01' and '2025-12-31'
+    group by 1 order by 1
+
+- id: q11
+  category: breakdown
+  type: rows
+  question: What was revenue by month in 2025?
+  sql: |
+    select format_date('%Y-%m', order_date) as label, sum(net_revenue) as value
+    from `{p}.mart.fct_order_items`
+    where order_date between '2025-01-01' and '2025-12-31'
+    group by 1 order by 1
+
+- id: q12
+  category: breakdown
+  type: rows
+  question: What were the top 5 product categories by revenue in 2025?
+  sql: |
+    select category as label, sum(net_revenue) as value
+    from `{p}.mart.rpt_sales`
+    where order_date between '2025-01-01' and '2025-12-31'
+    group by 1 order by 2 desc limit 5
+
+- id: q13
+  category: breakdown
+  type: rows
+  question: What was revenue by product department in 2025?
+  sql: |
+    select department as label, sum(net_revenue) as value
+    from `{p}.mart.rpt_sales`
+    where order_date between '2025-01-01' and '2025-12-31'
+    group by 1 order by 2 desc
+
+- id: q14
+  category: breakdown
+  type: rows
+  question: Who were the top 3 brands by revenue in 2025?
+  sql: |
+    select brand as label, sum(net_revenue) as value
+    from `{p}.mart.rpt_sales`
+    where order_date between '2025-01-01' and '2025-12-31'
+    group by 1 order by 2 desc limit 3
+
+- id: q15
+  category: filter
+  type: scalar
+  question: What was revenue from customers in Brazil in 2025?
+  sql: |
+    select sum(net_revenue) as value from `{p}.mart.rpt_sales`
+    where country = 'Brasil' and order_date between '2025-01-01' and '2025-12-31'
+
+- id: q16
+  category: filter
+  type: scalar
+  question: What was revenue for the Jeans category in 2024?
+  sql: |
+    select sum(net_revenue) as value from `{p}.mart.rpt_sales`
+    where category = 'Jeans' and order_date between '2024-01-01' and '2024-12-31'
+
+- id: q17
+  category: filter
+  type: scalar
+  question: How many orders came from customers acquired via Facebook in 2025?
+  sql: |
+    select count(distinct order_id) as value from `{p}.mart.rpt_sales`
+    where traffic_source = 'Facebook' and order_date between '2025-01-01' and '2025-12-31'
+
+- id: q18
+  category: filter
+  type: scalar
+  question: How many customers from China placed an order in 2024?
+  sql: |
+    select count(distinct customer_id) as value from `{p}.mart.rpt_sales`
+    where country = 'China' and order_date between '2024-01-01' and '2024-12-31'
+
+- id: q19
+  category: comparison
+  type: scalar
+  question: What was the year-over-year revenue growth in 2025 compared with 2024, as a percentage?
+  sql: |
+    select 100 * (sum(if(extract(year from order_date) = 2025, net_revenue, 0))
+                / sum(if(extract(year from order_date) = 2024, net_revenue, 0)) - 1) as value
+    from `{p}.mart.fct_order_items`
+    where order_date between '2024-01-01' and '2025-12-31'
+
+- id: q20
+  category: comparison
+  type: scalar
+  question: How much higher was revenue in Q4 2024 than in Q4 2023?
+  sql: |
+    select sum(if(order_date between '2024-10-01' and '2024-12-31', net_revenue, 0))
+         - sum(if(order_date between '2023-10-01' and '2023-12-31', net_revenue, 0)) as value
+    from `{p}.mart.fct_order_items`
+
+- id: q21
+  category: comparison
+  type: top1
+  question: Which month of 2025 had the highest revenue, and how much was it?
+  sql: |
+    select format_date('%Y-%m', order_date) as label, sum(net_revenue) as value
+    from `{p}.mart.fct_order_items`
+    where order_date between '2025-01-01' and '2025-12-31'
+    group by 1 order by 2 desc limit 1
+
+- id: q22
+  category: tricky
+  type: scalar
+  question: What were gross sales in 2024, including cancelled and returned items?
+  sql: |
+    select sum(sale_price) as value from `{p}.mart.fct_order_items`
+    where order_date between '2024-01-01' and '2024-12-31'
+
+- id: q23
+  category: tricky
+  type: scalar
+  question: How much sales value was lost to cancelled or returned items in 2025?
+  sql: |
+    select sum(sale_price) as value from `{p}.mart.fct_order_items`
+    where not is_revenue and order_date between '2025-01-01' and '2025-12-31'
+
+- id: q24
+  category: tricky
+  type: scalar
+  question: What was the average order value for the Women department in 2025?
+  sql: |
+    select sum(net_revenue) / count(distinct order_id) as value from `{p}.mart.rpt_sales`
+    where department = 'Women' and order_date between '2025-01-01' and '2025-12-31'
+
+- id: q25
+  category: tricky
+  type: scalar
+  question: On average, how many orders has each ordering customer placed?
+  sql: |
+    select count(distinct order_id) / count(distinct customer_id) as value
+    from `{p}.mart.fct_order_items`

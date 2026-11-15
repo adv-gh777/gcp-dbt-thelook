@@ -5,6 +5,8 @@ Toolbox's readOnly/allowedDatasets and the mart-reader IAM role."""
 import json, os, re, sys, datetime, pathlib
 
 ALLOWED_TOOL = "mcp__bigquery__execute_sql"
+# Claude Code's internal tool for --json-schema output: returns the answer, touches no data.
+PASSTHROUGH = {"StructuredOutput"}
 FORBIDDEN = re.compile(
     r"\b(insert|update|delete|merge|create|drop|alter|truncate|grant|revoke|"
     r"export|load|call|execute|declare|set|begin|commit)\b", re.I)
@@ -12,6 +14,8 @@ OTHER_DATASETS = re.compile(r"(bigquery-public-data|\braw\.|\bcore\.|information
 
 event = json.load(sys.stdin)
 tool = event.get("tool_name", "")
+if tool in PASSTHROUGH:
+    sys.exit(0)
 sql = (event.get("tool_input") or {}).get("sql", "")
 no_comments = re.sub(r"--[^\n]*|/\*.*?\*/", " ", sql, flags=re.S)
 no_strings = re.sub(r"'(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\"", "''", no_comments)

@@ -47,6 +47,7 @@ args=(
   --disable-slash-commands
 )
 if [[ $json == 1 ]]; then
-  args+=(--output-format json --json-schema "$(cat eval/answer_schema.json)")
+  args+=(--output-format json --json-schema "$(cat eval/answer_schema.json)"
+         --allowedTools "StructuredOutput")   # internal tool that returns the JSON answer
 fi
 exec claude "${args[@]}"

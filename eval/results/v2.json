@@ -1,0 +1,757 @@
+{
+  "summary": {
+    "label": "v2",
+    "questions": 25,
+    "passed": 25,
+    "accuracy": 1.0,
+    "latency_median_s": 7.3,
+    "latency_p90_s": 12.1,
+    "by_category": {
+      "simple": "4/4",
+      "time": "5/5",
+      "breakdown": "5/5",
+      "filter": "4/4",
+      "comparison": "3/3",
+      "tricky": "4/4"
+    },
+    "failures": {}
+  },
+  "results": [
+    {
+      "id": "q01",
+      "category": "simple",
+      "question": "What is total revenue across all time?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 7.5,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "value": 8120262.418382326
+      },
+      "answer": {
+        "value": 8120262.42,
+        "rows": [],
+        "sql": "SELECT ROUND(SUM(net_revenue),2) AS revenue FROM `<project>.mart.fct_order_items`"
+      },
+      "error": null
+    },
+    {
+      "id": "q02",
+      "category": "simple",
+      "question": "How many orders have been placed in total?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 6.3,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "value": 124829.0
+      },
+      "answer": {
+        "value": 124829,
+        "rows": [],
+        "sql": "SELECT COUNT(DISTINCT order_id) AS orders FROM `<project>.mart.fct_order_items`"
+      },
+      "error": null
+    },
+    {
+      "id": "q03",
+      "category": "simple",
+      "question": "How many customers have placed at least one order?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 6.1,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "value": 79908.0
+      },
+      "answer": {
+        "value": 79908,
+        "rows": [],
+        "sql": "SELECT COUNT(DISTINCT customer_id) AS customers FROM `<project>.mart.fct_order_items`"
+      },
+      "error": null
+    },
+    {
+      "id": "q04",
+      "category": "simple",
+      "question": "What is the overall average order value?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 6.3,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "value": 65.051089237
+      },
+      "answer": {
+        "value": 65.05,
+        "rows": [],
+        "sql": "SELECT ROUND(SUM(net_revenue)/COUNT(DISTINCT order_id),2) AS aov FROM `<project>.mart.fct_order_items`"
+      },
+      "error": null
+    },
+    {
+      "id": "q05",
+      "category": "time",
+      "question": "What was revenue in 2024?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 6.5,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "value": 1212275.510998647
+      },
+      "answer": {
+        "value": 1212275.51,
+        "rows": [],
+        "sql": "SELECT ROUND(SUM(net_revenue),2) AS revenue FROM `<project>.mart.fct_order_items` WHERE order_date BETWEEN '2024-01-01' AND '2024-12-31'"
+      },
+      "error": null
+    },
+    {
+      "id": "q06",
+      "category": "time",
+      "question": "How many orders were placed in 2025?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 6.8,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "value": 27630.0
+      },
+      "answer": {
+        "value": 27630,
+        "rows": [],
+        "sql": "SELECT COUNT(DISTINCT order_id) AS orders FROM `<project>.mart.fct_order_items` WHERE order_date BETWEEN '2025-01-01' AND '2025-12-31'"
+      },
+      "error": null
+    },
+    {
+      "id": "q07",
+      "category": "time",
+      "question": "What was the average order value in 2023?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 7.0,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "value": 64.030746077
+      },
+      "answer": {
+        "value": 64.03,
+        "rows": [],
+        "sql": "SELECT SUM(net_revenue)/COUNT(DISTINCT order_id) AS aov FROM `<project>.mart.fct_order_items` WHERE order_date BETWEEN '2023-01-01' AND '2023-12-31'"
+      },
+      "error": null
+    },
+    {
+      "id": "q08",
+      "category": "time",
+      "question": "What was revenue in March 2025?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 6.5,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "value": 126460.29024018
+      },
+      "answer": {
+        "value": 126460.29,
+        "rows": [],
+        "sql": "SELECT ROUND(SUM(net_revenue),2) AS revenue FROM `<project>.mart.fct_order_items` WHERE order_date BETWEEN '2025-03-01' AND '2025-03-31'"
+      },
+      "error": null
+    },
+    {
+      "id": "q09",
+      "category": "time",
+      "question": "How many distinct customers ordered in 2025?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 6.9,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "value": 23689.0
+      },
+      "answer": {
+        "value": 23689,
+        "rows": [],
+        "sql": "SELECT COUNT(DISTINCT customer_id) AS c FROM `<project>.mart.fct_order_items` WHERE order_date BETWEEN '2025-01-01' AND '2025-12-31'"
+      },
+      "error": null
+    },
+    {
+      "id": "q10",
+      "category": "breakdown",
+      "question": "What was revenue for each year from 2021 to 2025?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 10.3,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "rows": [
+          {
+            "label": "2021",
+            "value": 385345.300305029
+          },
+          {
+            "label": "2022",
+            "value": 603643.080501343
+          },
+          {
+            "label": "2023",
+            "value": 847126.770602717
+          },
+          {
+            "label": "2024",
+            "value": 1212275.510998647
+          },
+          {
+            "label": "2025",
+            "value": 1774318.452162481
+          }
+        ]
+      },
+      "answer": {
+        "value": null,
+        "rows": [
+          {
+            "label": "2021",
+            "value": 385345.3
+          },
+          {
+            "label": "2022",
+            "value": 603643.08
+          },
+          {
+            "label": "2023",
+            "value": 847126.77
+          },
+          {
+            "label": "2024",
+            "value": 1212275.51
+          },
+          {
+            "label": "2025",
+            "value": 1774318.45
+          }
+        ],
+        "sql": "SELECT FORMAT_DATE('%Y', order_date) AS y, ROUND(SUM(net_revenue),2) AS revenue FROM `<project>.mart.fct_order_items` WHERE order_date BETWEEN '2021-01-01' AND '2025-12-31' GROUP BY y ORDER BY y"
+      },
+      "error": null
+    },
+    {
+      "id": "q11",
+      "category": "breakdown",
+      "question": "What was revenue by month in 2025?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 7.7,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "rows": [
+          {
+            "label": "2025-01",
+            "value": 129622.420175924
+          },
+          {
+            "label": "2025-02",
+            "value": 107172.160114684
+          },
+          {
+            "label": "2025-03",
+            "value": 126460.29024018
+          },
+          {
+            "label": "2025-04",
+            "value": 128323.160212874
+          },
+          {
+            "label": "2025-05",
+            "value": 147292.490228059
+          },
+          {
+            "label": "2025-06",
+            "value": 139323.730080257
+          },
+          {
+            "label": "2025-07",
+            "value": 149185.320230616
+          },
+          {
+            "label": "2025-08",
+            "value": 159713.750116213
+          },
+          {
+            "label": "2025-09",
+            "value": 153759.410317514
+          },
+          {
+            "label": "2025-10",
+            "value": 172556.730141491
+          },
+          {
+            "label": "2025-11",
+            "value": 171175.840180017
+          },
+          {
+            "label": "2025-12",
+            "value": 189733.150124652
+          }
+        ]
+      },
+      "answer": {
+        "value": null,
+        "rows": [
+          {
+            "label": "2025-01",
+            "value": 129622.42
+          },
+          {
+            "label": "2025-02",
+            "value": 107172.16
+          },
+          {
+            "label": "2025-03",
+            "value": 126460.29
+          },
+          {
+            "label": "2025-04",
+            "value": 128323.16
+          },
+          {
+            "label": "2025-05",
+            "value": 147292.49
+          },
+          {
+            "label": "2025-06",
+            "value": 139323.73
+          },
+          {
+            "label": "2025-07",
+            "value": 149185.32
+          },
+          {
+            "label": "2025-08",
+            "value": 159713.75
+          },
+          {
+            "label": "2025-09",
+            "value": 153759.41
+          },
+          {
+            "label": "2025-10",
+            "value": 172556.73
+          },
+          {
+            "label": "2025-11",
+            "value": 171175.84
+          },
+          {
+            "label": "2025-12",
+            "value": 189733.15
+          }
+        ],
+        "sql": "SELECT FORMAT_DATE('%Y-%m', order_date) AS month, ROUND(SUM(net_revenue),2) AS revenue FROM `<project>.mart.rpt_sales` WHERE order_date BETWEEN '2025-01-01' AND '2025-12-31' GROUP BY 1 ORDER BY 1 LIMIT 50"
+      },
+      "error": null
+    },
+    {
+      "id": "q12",
+      "category": "breakdown",
+      "question": "What were the top 5 product categories by revenue in 2025?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 7.2,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "rows": [
+          {
+            "label": "Outerwear & Coats",
+            "value": 216775.520036634
+          },
+          {
+            "label": "Jeans",
+            "value": 208597.340321413
+          },
+          {
+            "label": "Sweaters",
+            "value": 140604.590006705
+          },
+          {
+            "label": "Fashion Hoodies & Sweatshirts",
+            "value": 105421.430178536
+          },
+          {
+            "label": "Swim",
+            "value": 104077.010141287
+          }
+        ]
+      },
+      "answer": {
+        "value": null,
+        "rows": [
+          {
+            "label": "Outerwear & Coats",
+            "value": 216775.52
+          },
+          {
+            "label": "Jeans",
+            "value": 208597.34
+          },
+          {
+            "label": "Sweaters",
+            "value": 140604.59
+          },
+          {
+            "label": "Fashion Hoodies & Sweatshirts",
+            "value": 105421.43
+          },
+          {
+            "label": "Swim",
+            "value": 104077.01
+          }
+        ],
+        "sql": "SELECT category, ROUND(SUM(net_revenue),2) AS revenue FROM `<project>.mart.rpt_sales` WHERE order_date BETWEEN '2025-01-01' AND '2025-12-31' GROUP BY category ORDER BY revenue DESC LIMIT 5"
+      },
+      "error": null
+    },
+    {
+      "id": "q13",
+      "category": "breakdown",
+      "question": "What was revenue by product department in 2025?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 7.1,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "rows": [
+          {
+            "label": "Men",
+            "value": 941842.401121578
+          },
+          {
+            "label": "Women",
+            "value": 832476.051040903
+          }
+        ]
+      },
+      "answer": {
+        "value": null,
+        "rows": [
+          {
+            "label": "Men",
+            "value": 941842.4
+          },
+          {
+            "label": "Women",
+            "value": 832476.05
+          }
+        ],
+        "sql": "SELECT department, ROUND(SUM(net_revenue),2) AS revenue FROM `<project>.mart.rpt_sales` WHERE order_date BETWEEN '2025-01-01' AND '2025-12-31' GROUP BY department ORDER BY department LIMIT 50"
+      },
+      "error": null
+    },
+    {
+      "id": "q14",
+      "category": "breakdown",
+      "question": "Who were the top 3 brands by revenue in 2025?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 8.0,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "rows": [
+          {
+            "label": "7 For All Mankind",
+            "value": 32171.940078733
+          },
+          {
+            "label": "Calvin Klein",
+            "value": 32048.910079949
+          },
+          {
+            "label": "True Religion",
+            "value": 31638.409940727
+          }
+        ]
+      },
+      "answer": {
+        "value": null,
+        "rows": [
+          {
+            "label": "7 For All Mankind",
+            "value": 32171.94
+          },
+          {
+            "label": "Calvin Klein",
+            "value": 32048.91
+          },
+          {
+            "label": "True Religion",
+            "value": 31638.41
+          }
+        ],
+        "sql": "SELECT brand, ROUND(SUM(net_revenue),2) AS revenue FROM `<project>.mart.rpt_sales` WHERE order_date BETWEEN '2025-01-01' AND '2025-12-31' GROUP BY brand ORDER BY revenue DESC LIMIT 3"
+      },
+      "error": null
+    },
+    {
+      "id": "q15",
+      "category": "filter",
+      "question": "What was revenue from customers in Brazil in 2025?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 14.5,
+      "num_turns": 5,
+      "queries": 3,
+      "blocked_queries": 0,
+      "expected": {
+        "value": 246646.600362566
+      },
+      "answer": {
+        "value": 246646.6,
+        "rows": [],
+        "sql": "SELECT ROUND(SUM(net_revenue),2) AS revenue FROM `<project>.mart.rpt_sales` WHERE country='Brasil' AND order_date BETWEEN '2025-01-01' AND '2025-12-31'"
+      },
+      "error": null
+    },
+    {
+      "id": "q16",
+      "category": "filter",
+      "question": "What was revenue for the Jeans category in 2024?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 7.1,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "value": 142756.910105617
+      },
+      "answer": {
+        "value": 142756.91,
+        "rows": [],
+        "sql": "SELECT SUM(net_revenue) AS revenue FROM `<project>.mart.rpt_sales` WHERE category='Jeans' AND order_date BETWEEN '2024-01-01' AND '2024-12-31'"
+      },
+      "error": null
+    },
+    {
+      "id": "q17",
+      "category": "filter",
+      "question": "How many orders came from customers acquired via Facebook in 2025?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 7.4,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "value": 1654.0
+      },
+      "answer": {
+        "value": 1654,
+        "rows": [],
+        "sql": "SELECT COUNT(DISTINCT order_id) AS orders FROM `<project>.mart.rpt_sales` WHERE traffic_source='Facebook' AND order_date BETWEEN '2025-01-01' AND '2025-12-31'"
+      },
+      "error": null
+    },
+    {
+      "id": "q18",
+      "category": "filter",
+      "question": "How many customers from China placed an order in 2024?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 8.4,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "value": 5636.0
+      },
+      "answer": {
+        "value": 5636,
+        "rows": [],
+        "sql": "SELECT COUNT(DISTINCT customer_id) AS c FROM `<project>.mart.rpt_sales` WHERE country='China' AND order_date BETWEEN '2024-01-01' AND '2024-12-31'"
+      },
+      "error": null
+    },
+    {
+      "id": "q19",
+      "category": "comparison",
+      "question": "What was the year-over-year revenue growth in 2025 compared with 2024, as a percentage?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 11.1,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "value": 46.3626408
+      },
+      "answer": {
+        "value": 46.36,
+        "rows": [],
+        "sql": "SELECT ROUND(100*(SUM(IF(EXTRACT(YEAR FROM order_date)=2025,net_revenue,0))/SUM(IF(EXTRACT(YEAR FROM order_date)=2024,net_revenue,0))-1),2) g FROM `<project>.mart.fct_order_items` WHERE order_date BETWEEN '2024-01-01' AND '2025-12-31'"
+      },
+      "error": null
+    },
+    {
+      "id": "q20",
+      "category": "comparison",
+      "question": "How much higher was revenue in Q4 2024 than in Q4 2023?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 12.8,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "value": 91943.190010204
+      },
+      "answer": {
+        "value": 91943.19,
+        "rows": [],
+        "sql": "SELECT SUM(IF(order_date BETWEEN '2024-10-01' AND '2024-12-31', net_revenue, 0)) - SUM(IF(order_date BETWEEN '2023-10-01' AND '2023-12-31', net_revenue, 0)) AS diff FROM `<project>.mart.fct_order_items` WHERE order_date BETWEEN '2023-10-01' AND '2024-12-31'"
+      },
+      "error": null
+    },
+    {
+      "id": "q21",
+      "category": "comparison",
+      "question": "Which month of 2025 had the highest revenue, and how much was it?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 8.5,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "rows": [
+          {
+            "label": "2025-12",
+            "value": 189733.150124652
+          }
+        ]
+      },
+      "answer": {
+        "value": null,
+        "rows": [
+          {
+            "label": "2025-12",
+            "value": 189733.15
+          }
+        ],
+        "sql": "SELECT FORMAT_DATE('%Y-%m', order_date) m, ROUND(SUM(net_revenue),2) r FROM `<project>.mart.fct_order_items` WHERE order_date BETWEEN '2025-01-01' AND '2025-12-31' GROUP BY m ORDER BY r DESC LIMIT 3"
+      },
+      "error": null
+    },
+    {
+      "id": "q22",
+      "category": "tricky",
+      "question": "What were gross sales in 2024, including cancelled and returned items?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 7.3,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "value": 1602341.121371345
+      },
+      "answer": {
+        "value": 1602341.12,
+        "rows": [],
+        "sql": "SELECT SUM(sale_price) AS gross_sales FROM `<project>.mart.fct_order_items` WHERE order_date BETWEEN '2024-01-01' AND '2024-12-31'"
+      },
+      "error": null
+    },
+    {
+      "id": "q23",
+      "category": "tricky",
+      "question": "How much sales value was lost to cancelled or returned items in 2025?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 12.1,
+      "num_turns": 4,
+      "queries": 2,
+      "blocked_queries": 0,
+      "expected": {
+        "value": 591872.070648395
+      },
+      "answer": {
+        "value": 591872.07,
+        "rows": [],
+        "sql": "SELECT SUM(sale_price) AS lost FROM `<project>.mart.fct_order_items` WHERE order_date BETWEEN '2025-01-01' AND '2025-12-31' AND item_status IN ('cancelled','returned')"
+      },
+      "error": null
+    },
+    {
+      "id": "q24",
+      "category": "tricky",
+      "question": "What was the average order value for the Women department in 2025?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 12.6,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "value": 59.924852508
+      },
+      "answer": {
+        "value": 59.92,
+        "rows": [],
+        "sql": "SELECT SUM(net_revenue)/COUNT(DISTINCT order_id) aov FROM `<project>.mart.rpt_sales` WHERE department='Women' AND order_date BETWEEN '2025-01-01' AND '2025-12-31'"
+      },
+      "error": null
+    },
+    {
+      "id": "q25",
+      "category": "tricky",
+      "question": "On average, how many orders has each ordering customer placed?",
+      "passed": true,
+      "failure": null,
+      "latency_s": 6.9,
+      "num_turns": 3,
+      "queries": 1,
+      "blocked_queries": 0,
+      "expected": {
+        "value": 1.562158982830255
+      },
+      "answer": {
+        "value": 1.56,
+        "rows": [],
+        "sql": "SELECT COUNT(DISTINCT order_id)/COUNT(DISTINCT customer_id) AS v FROM `<project>.mart.fct_order_items`"
+      },
+      "error": null
+    }
+  ]
+}

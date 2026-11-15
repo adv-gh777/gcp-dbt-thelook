@@ -2,22 +2,40 @@
   "type": "object",
   "properties": {
     "value": {
-      "type": ["number", "null"],
-      "description": "Single numeric answer, or null if the answer is a list/breakdown."
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "The single number answering the question, copied from your executed query's result. Never null when the answer is one number. Null only when the answer is a list/breakdown."
     },
     "rows": {
       "type": "array",
-      "description": "Breakdown answers (e.g. by month, category, year); empty for single-number answers.",
+      "description": "Breakdown answers (by month, category, year, ...). Also use rows when the question asks WHICH item (e.g. which month/category): return that item's label and value. Empty for plain single-number answers.",
       "items": {
         "type": "object",
         "properties": {
-          "label": {"type": "string", "description": "Years as YYYY, months as YYYY-MM, otherwise the exact value from the data."},
-          "value": {"type": "number"}
+          "label": {
+            "type": "string",
+            "description": "Years as YYYY, months as YYYY-MM, otherwise the exact value from the data."
+          },
+          "value": {
+            "type": "number"
+          }
         },
-        "required": ["label", "value"]
+        "required": [
+          "label",
+          "value"
+        ]
       }
     },
-    "sql": {"type": "string", "description": "The final SQL used."}
+    "sql": {
+      "type": "string",
+      "description": "The final SQL used."
+    }
   },
-  "required": ["value", "rows", "sql"]
+  "required": [
+    "value",
+    "rows",
+    "sql"
+  ]
 }
