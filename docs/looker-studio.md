@@ -1,6 +1,6 @@
 # Data Studio (formerly Looker Studio) dashboard
 
-A one-page dashboard on the `mart` layer. About 15 minutes of clicking.
+A one-page dashboard on the `mart` layer.
 
 > Open-source MetricFlow has no BI connector (the hosted Semantic Layer APIs are dbt platform only).
 > So Data Studio reads the marts directly, and the four metrics are re-created below
