@@ -47,7 +47,7 @@ Check that **Data source** reads `rpt_sales` and **Date range dimension** reads 
    - **Insert → Table**, then set **Dimension** to `country` and **Metrics** to `Revenue` and `Customers`.
    - Sort by `Revenue`, descending.
 5. **Filters.**
-   - **Insert → Date range control**, and place it at the top right. In its panel, set **Default date range → Advanced**, with a start date of 1 Jan 2019 and an end date of today. That way the charts show all data by default.
+   - **Insert → Date range control**, and place it at the top right. In its panel, set **Default date range → Advanced**, with a start date of 1 Jan 2019 and a fixed end date in the future, such as 31 Dec 2030. Don't end it today: thelook's generator creates orders dated a few days ahead, so an end date of today drops them and Revenue won't match `mf query`.
    - **Insert → Drop-down list**, then set **Control field** to `traffic_source`.
 
 Click **View** (top right) to try the filters. The report saves automatically. Rename it by clicking "Untitled Report".
