@@ -100,3 +100,32 @@ resource "google_billing_budget" "project" {
 
   depends_on = [google_project_service.apis]
 }
+
+# --- Analytics agent: read-only access to the mart layer only ----------------
+
+resource "google_service_account" "mart_reader" {
+  account_id   = "mart-reader"
+  display_name = "mart reader (AI agent)"
+  description  = "Used by the analytics agent via MCP Toolbox; read-only on the mart dataset."
+  depends_on   = [google_project_service.apis]
+}
+
+# Needed to run query jobs at all (project-level, cannot be dataset-scoped).
+resource "google_project_iam_member" "mart_reader_job_user" {
+  project = var.project_id
+  role    = "roles/bigquery.jobUser"
+  member  = google_service_account.mart_reader.member
+}
+
+# Read access to the mart dataset only (no raw/core).
+resource "google_bigquery_dataset_iam_member" "mart_reader_viewer" {
+  dataset_id = google_bigquery_dataset.layer["mart"].dataset_id
+  role       = "roles/bigquery.dataViewer"
+  member     = google_service_account.mart_reader.member
+}
+
+resource "google_service_account_iam_member" "developer_impersonates_mart_reader" {
+  service_account_id = google_service_account.mart_reader.name
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = "user:${var.developer_email}"
+}

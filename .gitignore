@@ -23,3 +23,11 @@ logs/
 .user.yml
 
 .DS_Store
+
+# Agent / eval
+bin/
+agent/logs/
+!.mcp.json
+!agent/settings.json
+!eval/*.json
+!eval/results/*.json

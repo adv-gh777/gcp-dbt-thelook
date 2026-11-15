@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "bigquery": {
+      "command": "./bin/toolbox",
+      "args": ["--config", "agent/tools.yaml", "--stdio"]
+    }
+  }
+}

@@ -1,0 +1,21 @@
+# MCP Toolbox for Databases config: the agent's only window into BigQuery.
+# Auth: your ADC impersonates the read-only mart-reader service account (no keys).
+kind: source
+name: mart
+type: bigquery
+project: ${GCP_PROJECT}
+location: US
+readOnly: true                 # SELECT only; enforced by Toolbox
+writeMode: blocked
+allowedDatasets: [mart]        # dry-run check rejects any other dataset
+impersonateServiceAccount: mart-reader@${GCP_PROJECT}.iam.gserviceaccount.com
+maxQueryResultRows: 200        # row limit returned to the agent
+maximumBytesBilled: 1000000000 # 1 GB per-query cap; BigQuery fails the job above it
+---
+kind: tool
+name: execute_sql
+type: bigquery-execute-sql
+source: mart
+description: >
+  Run one read-only GoogleSQL SELECT against the mart dataset and return the rows.
+  Tables must be fully qualified as `<project>.mart.<table>`.

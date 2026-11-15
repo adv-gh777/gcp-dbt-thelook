@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Ask the analytics agent a question about the mart layer.
+#   ./ask "What was revenue by month in 2025?"
+#   ./ask --json "..."   # structured JSON (used by the eval harness)
+# Runs Claude Code headless (`claude -p`) on YOUR Claude subscription login.
+set -euo pipefail
+cd "$(dirname "$0")"
+
+if [[ -n "${ANTHROPIC_API_KEY:-}" || -n "${ANTHROPIC_AUTH_TOKEN:-}" ]]; then
+  echo "ERROR: ANTHROPIC_API_KEY / ANTHROPIC_AUTH_TOKEN is set in this shell." >&2
+  echo "This agent is meant to run on your Claude subscription login (no API billing)." >&2
+  echo "Run: unset ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN   then try again." >&2
+  exit 2
+fi
+: "${GCP_PROJECT:?Set GCP_PROJECT to your GCP project id}"
+command -v claude >/dev/null || { echo "ERROR: Claude Code CLI (claude) not found." >&2; exit 1; }
+auth_method="$(claude auth status 2>/dev/null | python3 -c 'import sys,json; print(json.load(sys.stdin).get("authMethod",""))' 2>/dev/null || true)"
+if [[ "$auth_method" != "claude.ai" ]]; then
+  echo "ERROR: Claude Code is not logged in with a Claude subscription (authMethod='${auth_method}')." >&2
+  echo "Run 'claude' and /login with your Claude account (Pro/Max)." >&2
+  exit 2
+fi
+[[ -x bin/toolbox ]] || { echo "ERROR: run agent/install-toolbox.sh first." >&2; exit 1; }
+
+json=0
+if [[ "${1:-}" == "--json" ]]; then json=1; shift; fi
+question="${*:?Usage: ./ask [--json] \"question\"}"
+
+system_prompt="$(
+  sed -e "s/{{PROJECT}}/${GCP_PROJECT}/g" -e "s/{{TODAY}}/$(date +%F)/g" agent/system_prompt.md
+  for f in dbt/models/semantic/sem_sales.yml dbt/models/marts/_marts.yml dbt/models/marts/_rpt_sales.yml; do
+    printf '\n### %s\n```yaml\n' "$f"; cat "$f"; printf '```\n'
+  done
+)"
+
+args=(
+  -p "$question"
+  --model "${AGENT_MODEL:-sonnet}"
+  --system-prompt "$system_prompt"
+  --restricted                      # ignore user/project settings; no code-running tools
+  --tools ""                        # no built-in tools at all (no files, shell, web)
+  --strict-mcp-config --mcp-config .mcp.json
+  --allowedTools "mcp__bigquery__execute_sql"
+  --permission-mode dontAsk         # anything not allow-listed is denied
+  --settings agent/settings.json    # PreToolUse guard + query log
+  --no-session-persistence
+  --disable-slash-commands
+)
+if [[ $json == 1 ]]; then
+  args+=(--output-format json --json-schema "$(cat eval/answer_schema.json)")
+fi
+exec claude "${args[@]}"

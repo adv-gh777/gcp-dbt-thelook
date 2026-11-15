@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "properties": {
+    "value": {
+      "type": ["number", "null"],
+      "description": "Single numeric answer, or null if the answer is a list/breakdown."
+    },
+    "rows": {
+      "type": "array",
+      "description": "Breakdown answers (e.g. by month, category, year); empty for single-number answers.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {"type": "string", "description": "Years as YYYY, months as YYYY-MM, otherwise the exact value from the data."},
+          "value": {"type": "number"}
+        },
+        "required": ["label", "value"]
+      }
+    },
+    "sql": {"type": "string", "description": "The final SQL used."}
+  },
+  "required": ["value", "rows", "sql"]
+}
