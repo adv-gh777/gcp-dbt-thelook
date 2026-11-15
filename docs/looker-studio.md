@@ -26,11 +26,31 @@ A one-page dashboard on the `mart` layer. About 15 minutes of clicking.
 
 ## 3. Charts
 
-1. **Scorecards** (4): Revenue, Orders, Customers, Average order value.
-2. **Time series**: dimension `month_start`, metric Revenue.
-3. **Bar chart**: dimension `category`, metric Revenue, sorted descending, top 10.
-4. **Geo chart or table**: dimension `country`, metrics Revenue and Customers.
-5. **Controls**: add a **Date range control** (date dimension `order_date`) and a **Drop-down list** on `traffic_source`.
+Each chart works the same way:
+1. **Insert → \<chart type\>**, then click on the canvas to place it.
+2. The **Setup** panel opens on the right. Click the existing field chip under **Dimension** or **Metric** to swap it for the field you want, or click **Add dimension** / **Add metric**.
+
+Check that **Data source** reads `rpt_sales` and **Date range dimension** reads `order_date`.
+
+1. **Scorecards.**
+   - **Insert → Scorecard**, then set **Metric** to `Revenue`.
+   - Copy and paste it three times (⌘C, ⌘V), then change the metric on each copy to `Orders`, `Customers` and `Average order value`.
+   - Line the four up along the top.
+2. **Revenue over time.**
+   - **Insert → Time series chart**, then set **Dimension** to `month_start` and **Metric** to `Revenue`.
+   - If the line is daily, click the calendar icon on the `month_start` chip and set **Type → Date & Time → Year Month**.
+3. **Revenue by category.**
+   - **Insert → Bar chart**, then set **Dimension** to `category` and **Metric** to `Revenue`.
+   - **Sort**: `Revenue`, Descending.
+   - In the **Style** tab, set **Bars** to 10.
+4. **Revenue by country.**
+   - **Insert → Table**, then set **Dimension** to `country` and **Metrics** to `Revenue` and `Customers`.
+   - Sort by `Revenue`, descending.
+5. **Filters.**
+   - **Insert → Date range control**, and place it at the top right. In its panel, set **Default date range → Advanced**, with a start date of 1 Jan 2019 and an end date of today. That way the charts show all data by default.
+   - **Insert → Drop-down list**, then set **Control field** to `traffic_source`.
+
+Click **View** (top right) to try the filters. The report saves automatically. Rename it by clicking "Untitled Report".
 
 ## 4. Check it
 
