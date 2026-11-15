@@ -57,6 +57,8 @@ Click **View** (top right) to try the filters. The report saves automatically. R
 Compare the Revenue scorecard (with the date range set to all time) against:
 
 ```bash
+source .venv/bin/activate          # from the repo root; mf lives in the venv
+export GCP_PROJECT=<PROJECT_ID>
 cd dbt && mf query --metrics revenue,orders,average_order_value
 ```
 
