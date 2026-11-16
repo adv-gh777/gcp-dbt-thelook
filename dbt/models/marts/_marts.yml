@@ -7,46 +7,58 @@ models:
         columns: [order_item_id]
     columns:
       - name: order_item_id
+        description: Primary key; one row per item in an order.
         data_type: int64
         constraints: [{type: not_null}]
         data_tests: [unique]
       - name: order_id
+        description: Order the item belongs to; an order has one or more items.
         data_type: int64
         constraints: [{type: not_null}]
       - name: customer_id
+        description: Customer who placed the order (FK to dim_customers).
         data_type: int64
         constraints: [{type: not_null}]
         data_tests:
           - relationships:
               arguments: {to: ref('dim_customers'), field: customer_id}
       - name: product_id
+        description: Product sold (FK to dim_products).
         data_type: int64
         constraints: [{type: not_null}]
         data_tests:
           - relationships:
               arguments: {to: ref('dim_products'), field: product_id}
       - name: order_date
+        description: Date the item was ordered (UTC); the time dimension for all metrics (FK to dim_date).
         data_type: date
         constraints: [{type: not_null}]
         data_tests:
           - relationships:
               arguments: {to: ref('dim_date'), field: date_day}
       - name: ordered_at
+        description: Timestamp the item was ordered (UTC).
         data_type: timestamp
       - name: item_status
+        description: "Lower-case item status: ordered, processing, shipped, complete, cancelled, returned."
         data_type: string
       - name: sale_price
+        description: Gross price of the item, including cancelled and returned items.
         data_type: "numeric(38, 9)"
         constraints: [{type: not_null}]
       - name: unit_cost
+        description: Product cost per unit (from dim_products at build time).
         data_type: "numeric(38, 9)"
       - name: is_revenue
+        description: False when the item was cancelled or returned.
         data_type: bool
       - name: net_revenue
+        description: sale_price when is_revenue, otherwise 0. The basis of the revenue metric.
         data_type: "numeric(38, 9)"
         constraints: [{type: not_null}]
 
   - name: dim_customers
+    description: One row per customer (synthetic). Names, email and street address are dropped in staging.
     constraints:
       - type: primary_key
         warn_unenforced: false
@@ -56,15 +68,16 @@ models:
         data_type: int64
         constraints: [{type: not_null}]
         data_tests: [unique]
-      - {name: age, data_type: int64}
-      - {name: gender, data_type: string}
+      - {name: age, data_type: int64, description: Age in years.}
+      - {name: gender, data_type: string, description: "Single-letter gender code as in the source data."}
       - {name: city, data_type: string}
       - {name: state, data_type: string}
-      - {name: country, data_type: string}
-      - {name: traffic_source, data_type: string}
-      - {name: signup_date, data_type: date}
+      - {name: country, data_type: string, description: Country name as spelled in the source data.}
+      - {name: traffic_source, data_type: string, description: Acquisition channel the customer came from.}
+      - {name: signup_date, data_type: date, description: Date the customer account was created (UTC).}
 
   - name: dim_products
+    description: One row per product.
     constraints:
       - type: primary_key
         warn_unenforced: false
@@ -76,12 +89,13 @@ models:
         data_tests: [unique]
       - {name: product_name, data_type: string}
       - {name: brand, data_type: string}
-      - {name: category, data_type: string}
-      - {name: department, data_type: string}
-      - {name: retail_price, data_type: "numeric(38, 9)"}
-      - {name: unit_cost, data_type: "numeric(38, 9)"}
+      - {name: category, data_type: string, description: "Product category, e.g. Jeans, Outerwear & Coats."}
+      - {name: department, data_type: string, description: "Men or Women."}
+      - {name: retail_price, data_type: "numeric(38, 9)", description: List price (sale_price on the fact is what was charged).}
+      - {name: unit_cost, data_type: "numeric(38, 9)", description: Cost to the business per unit.}
 
   - name: dim_date
+    description: Calendar covering every order date; also the MetricFlow time spine.
     time_spine:
       standard_granularity_column: date_day
     constraints:

@@ -80,7 +80,9 @@ metrics:
 
   - name: average_order_value
     label: Average order value
-    description: Revenue / orders.
+    description: >
+      Revenue / orders. The denominator counts all orders, including fully cancelled or returned
+      ones (which contribute 0 revenue), so this is net revenue per order placed.
     type: ratio
     type_params:
       numerator: revenue

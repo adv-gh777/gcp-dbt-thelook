@@ -5,7 +5,7 @@
     "passed": 25,
     "accuracy": 1.0,
     "latency_median_s": 7.3,
-    "latency_p90_s": 12.1,
+    "latency_p90_s": 12.7,
     "by_category": {
       "simple": "4/4",
       "time": "5/5",

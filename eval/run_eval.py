@@ -17,7 +17,8 @@ QUESTIONS = ROOT / "eval" / "questions.yaml"
 EXPECTED = ROOT / "eval" / "expected.json"
 RESULTS = ROOT / "eval" / "results"
 QUERY_LOG = ROOT / "agent" / "logs" / "queries.jsonl"
-REL_TOL, ABS_TOL = 0.005, 0.01  # 0.5% relative, or 1 cent
+REL_TOL, ABS_TOL = 1e-4, 0.01  # 0.01% relative, or 1 cent (expected values are exact; agent rounds to 2 dp)
+TIMEOUT_S = 600
 
 
 def refresh_expected(questions, project):
@@ -83,7 +84,10 @@ def ask(question):
               "or a list/breakdown in `rows` (with `value` null). Percentages as plain numbers "
               "(12.5 means 12.5%). Do not round beyond 2 decimals.")
     start = time.monotonic()
-    proc = subprocess.run([str(ROOT / "ask"), "--json", prompt], capture_output=True, text=True, timeout=600)
+    try:
+        proc = subprocess.run([str(ROOT / "ask"), "--json", prompt], capture_output=True, text=True, timeout=TIMEOUT_S)
+    except subprocess.TimeoutExpired:
+        return None, time.monotonic() - start, {"error": f"timeout after {TIMEOUT_S}s", "timeout": True}
     latency = time.monotonic() - start
     try:
         env = json.loads(proc.stdout)
@@ -97,10 +101,12 @@ def run(questions, expected, label):
     for i, q in enumerate(questions, 1):
         ans, latency, env = ask(q["question"])
         passed, failure = grade(q, expected[q["id"]], ans)
-        if "error" in env or env.get("is_error"):
-            failure = failure and "agent_error"
         qs = [e for e in queries_for(env.get("session_id")) if e["tool"].startswith("mcp__")]
-        if not passed and not qs:
+        if env.get("timeout"):
+            failure = "timeout"
+        elif "error" in env or env.get("is_error"):
+            failure = failure and "agent_error"
+        elif not passed and not qs:
             failure = "no_query_executed"  # answered (or gave up) without running any SQL
         results.append({
             "id": q["id"], "category": q["category"], "question": q["question"],
@@ -126,7 +132,7 @@ def report(results, label):
     failures = Counter(r["failure"] for r in results if not r["passed"])
     summary = {
         "label": label, "questions": n, "passed": passed, "accuracy": round(passed / n, 3),
-        "latency_median_s": round(statistics.median(lat), 1), "latency_p90_s": round(sorted(lat)[int(0.9 * (n - 1))], 1),
+        "latency_median_s": round(statistics.median(lat), 1), "latency_p90_s": round(statistics.quantiles(lat, n=10)[-1], 1) if n > 1 else lat[0],
         "by_category": {k: f"{v[0]}/{v[1]}" for k, v in by_cat.items()},
         "failures": dict(failures),
     }
@@ -162,6 +168,7 @@ def main():
     project = os.environ.get("GCP_PROJECT") or sys.exit("ERROR: set GCP_PROJECT")
 
     questions = yaml.safe_load(QUESTIONS.read_text())
+    qmap = {q["id"]: q for q in questions}
     if args.refresh_expected:
         return refresh_expected(questions, project)
     if args.only:
@@ -170,7 +177,6 @@ def main():
     expected = json.loads(EXPECTED.read_text())
     if args.regrade:
         saved = json.loads((RESULTS / f"{args.regrade}.json").read_text())["results"]
-        qmap = {q["id"]: q for q in questions}
         for r in saved:
             r["passed"], r["failure"] = grade(qmap[r["id"]], expected[r["id"]], r["answer"])
             if not r["passed"] and not r["queries"]:

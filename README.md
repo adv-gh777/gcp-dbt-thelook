@@ -77,7 +77,7 @@ Defined in [`dbt/models/semantic/sem_sales.yml`](dbt/models/semantic/sem_sales.y
 | `revenue` | sum of `net_revenue` |
 | `orders` | count distinct `order_id` |
 | `customers` | count distinct `customer_id` |
-| `average_order_value` | ratio: `revenue / orders` |
+| `average_order_value` | ratio: `revenue / orders`. The denominator counts all orders, including fully cancelled or returned ones, so this is net revenue per order placed. |
 
 Metrics can be sliced by `order_date`, `item_status`, `customer__country`, `customer__gender`, `customer__traffic_source`, `product__category`, `product__brand` and `product__department`.
 
@@ -94,7 +94,7 @@ Open-source MetricFlow compiles metrics to SQL locally (`mf query`). The hosted 
   - A Terraform-managed billing budget notifies billing admins at 50%, 90% and 100% of the monthly budget. It only notifies; it does not cap spend.
   - `maximum_bytes_billed: 1 GB` in the dbt profile makes any runaway query fail instead of billing.
   - A full `dbt build` bills roughly 100–150 MB, partly because BigQuery bills a 10 MB minimum for each table a query references. That is well inside the free tier (1 TB of queries per month).
-- **`mart-reader` (used by the agent):** `roles/bigquery.dataViewer` on `mart` only, plus `roles/bigquery.jobUser`. It has no access to `raw` or `core` and cannot write anywhere. The developer impersonates it, so again no keys are involved.
+- **`mart-reader` (used by the agent):** `roles/bigquery.dataViewer` on `mart` only, plus `roles/bigquery.jobUser`. It has no access to `raw` or `core` and cannot write anywhere. The developer impersonates it, so again no keys are involved. Like any principal with `jobUser`, it could still query public datasets such as `bigquery-public-data`. Keeping the agent to `mart` for those is done by Toolbox's `allowedDatasets`, not IAM.
 - **Nothing sensitive is committed.** Terraform state, `*.tfvars`, agent query logs and `*.json` files are gitignored, apart from a few named config and eval files.
 
 ## Tests
@@ -106,6 +106,8 @@ Open-source MetricFlow compiles metrics to SQL locally (`mf query`). The hosted 
   - `accepted_values` on item status.
   - `relationships` from the fact to all three dimensions, including `order_date → dim_date`.
 - **Reconciliation:** [`assert_mart_revenue_reconciles_to_source`](dbt/tests/assert_mart_revenue_reconciles_to_source.sql) checks that the fact's row count and total `sale_price` exactly match the public source, to the cent. Because the source is regenerated continuously, the test compares only source rows up to the fact's latest timestamp.
+  - It is mainly a fan-out and dropped-row check, and it is reliable within a single `dbt build`.
+  - The staging layer is live views over a changing source, so if you run `dbt test` long after the build, newly generated rows can make this test and the `relationships` tests fail. Rebuild first.
 - **Reporting table:** `assert_rpt_sales_matches_fact` checks that `rpt_sales` neither drops nor duplicates rows or revenue.
 - **Model contracts:** contracts are enforced on the star-schema marts, so column names and types are checked at build time.
   - `not_null` constraints are enforced by BigQuery.
@@ -127,8 +129,10 @@ A plain `claude` session in this folder can also use the BigQuery server from `.
 |---|---|
 | IAM | `mart-reader` service account: read-only on `mart`, cannot read `raw`/`core`, cannot create tables |
 | MCP Toolbox source | `readOnly: true` (SELECT only), `allowedDatasets: [mart]` (dry-run check), `maxQueryResultRows: 200`, `maximumBytesBilled: 1 GB` |
-| Claude Code flags | `--restricted --tools ""` (no shell, file or web tools), `--strict-mcp-config` (only this MCP server), `--allowedTools mcp__bigquery__execute_sql`, `--permission-mode dontAsk` (everything else denied), no session persistence |
-| PreToolUse hook | [`agent/hooks/guard_sql.py`](agent/hooks/guard_sql.py) blocks non-SELECT, multi-statement and non-`mart` SQL, and logs every query to `agent/logs/queries.jsonl` |
+| Claude Code flags | `--restricted --tools ""` (no shell, file or web tools), `--strict-mcp-config` (only this MCP server), `--allowedTools mcp__bigquery__execute_sql`, `--permission-mode dontAsk` (everything else denied), no session persistence in one-shot and `--json` modes |
+| PreToolUse hook | [`agent/hooks/guard_sql.py`](agent/hooks/guard_sql.py) is the audit log (every call goes to `agent/logs/queries.jsonl`) and a best-effort regex pre-filter that rejects non-SELECT, multi-statement and non-`mart` SQL. It fails closed: any error denies the call. |
+
+IAM and MCP Toolbox are the layers that actually enforce access. The hook is a regex filter, not a SQL parser, so it is an extra check and the audit trail rather than the security boundary.
 
 The system prompt also requires every reported number to come from an executed query.
 
@@ -150,20 +154,22 @@ The agent uses the Claude Code login on the machine running it (a Pro or Max sub
 - breakdowns
 - attribute filters
 - comparisons
-- tricky cases, such as gross versus net sales, value lost to returns, and "Brazil" appearing in the data as `Brasil`
+- tricky cases, such as gross versus net sales, and value lost to returns
 
-Expected answers live in [`eval/expected.json`](eval/expected.json). They are computed from the marts with `--refresh-expected`, and periods are fixed (for example, 2024) so the answers stay stable.
+The filter questions include one where the data spells the country differently from the question ("Brazil" is `Brasil`).
+
+Expected answers live in [`eval/expected.json`](eval/expected.json). They are computed from the marts with `--refresh-expected`. Most questions use fixed periods (for example, 2024) so their answers stay stable. The five all-time questions change with every `dbt build`, so re-run `--refresh-expected` after rebuilding.
 
 [`eval/run_eval.py`](eval/run_eval.py) works as follows:
 - It runs each question through `./ask --json` in sequence, to go easy on plan limits.
 - `--json-schema` constrains each answer to `{value, rows, sql}`.
-- Answers pass if they are within 0.5% (or 1 cent) of the expected value. For breakdowns, the labels must also match exactly.
+- Answers pass if they are within 0.01% (or 1 cent) of the expected value. For breakdowns, the set of labels must also match (case-insensitive).
 - It reports accuracy, results by category, failure categories and latency, in [`eval/results/`](eval/results).
 
 | Run | Accuracy | Median / p90 latency | Failures |
 |---|---|---|---|
-| [baseline](eval/results/baseline.md) | 22/25 (88%) | 8.1 s / 35.6 s | 2 × `no_query_executed`, 1 × `no_answer` |
-| [v2](eval/results/v2.md) | 25/25 (100%) | 7.3 s / 12.1 s | none |
+| [baseline](eval/results/baseline.md) | 22/25 (88%) | 8.1 s / 51.7 s | 2 × `no_query_executed`, 1 × `no_answer` |
+| [v2](eval/results/v2.md) | 25/25 (100%) | 7.3 s / 12.7 s | none |
 
 What changed between the two runs, based on the baseline failures:
 1. **Groundedness rule.** Twice, the agent wrote correct SQL but returned without executing it (`value: null`, zero queries logged). The prompt now requires every number to come from an executed query.
@@ -173,6 +179,8 @@ Caveats:
 - This is a small eval, written by the same person who built the agent, and each configuration was run once. LLM output is non-deterministic, so expect some variation between runs.
 - The two baseline `no_query_executed` failures happened during an unusually slow start: the first few calls took 36–87 seconds against about 8 seconds afterwards. Part of the improvement may be due to that rather than the prompt change.
 - The v1 prompt deliberately contained no eval-specific hints, such as the `Brasil` spelling.
+- Both runs were scored with the current 0.01% tolerance. All passing answers were within 1 cent of the exact value.
+- Mart column descriptions, which are part of the agent's context, were added after these runs. Re-run the eval to measure their effect.
 
 ## How to run
 
@@ -201,12 +209,14 @@ cd dbt
 export GCP_PROJECT=<PROJECT_ID>
 dbt debug
 dbt build
-dbt docs generate && dbt docs serve
+dbt docs generate
+dbt docs serve      # blocks this terminal; open a new one (venv active, GCP_PROJECT exported) for the next steps
 
 # 4. Semantic layer
 mf validate-configs
 mf query --metrics revenue,orders,customers,average_order_value
 mf query --metrics revenue,average_order_value --group-by product__category --order -revenue --limit 5
+cd ..
 ```
 
 Then build the dashboard by following [docs/looker-studio.md](docs/looker-studio.md).
@@ -216,7 +226,7 @@ Agent and evals (requires the [Claude Code](https://docs.claude.com/en/docs/clau
 ```bash
 # from the repo root, with the venv active and GCP_PROJECT exported
 unset ANTHROPIC_API_KEY             # ask refuses to run if it is set
-agent/install-toolbox.sh            # pinned MCP Toolbox binary into ./bin (gitignored), checksum-verified
+agent/install-toolbox.sh            # pinned MCP Toolbox binary into ./bin (gitignored), MD5 integrity check
 ./ask "What were the top 5 product categories by revenue in 2025?"
 ./ask --chat                        # interactive, same guardrails (exit with Ctrl+D)
 
@@ -235,7 +245,7 @@ dbt/
   models/core     core layer
   models/marts    star schema + contracts
   models/semantic MetricFlow semantic models and metrics
-  tests/          reconciliation test
+  tests/          reconciliation tests (source → fact, fact → rpt_sales)
   macros/         schema naming override
 docs/             Data Studio walkthrough
 ask               agent entry point (claude -p wrapper)
@@ -243,3 +253,7 @@ ask               agent entry point (claude -p wrapper)
 agent/            system prompt, Toolbox config, guard hook, settings, installer
 eval/             questions + ground-truth SQL, expected answers, runner, results
 ```
+
+## Licence
+
+[MIT](LICENSE).

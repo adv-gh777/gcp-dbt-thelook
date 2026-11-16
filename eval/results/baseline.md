@@ -1,6 +1,6 @@
 # Eval: baseline
 
-**Accuracy: 22/25 (88%)**, median latency 8.1s, p90 35.6s
+**Accuracy: 22/25 (88%)**, median latency 8.1s, p90 51.7s
 
 | Category | Passed |
 |---|---|

@@ -1,4 +1,4 @@
--- Denormalised reporting table for Looker Studio (BI tools work best on one wide table).
+-- Denormalised reporting table for Data Studio, formerly Looker Studio (BI tools work best on one wide table).
 -- Grain = one order item, same as fct_order_items.
 select
     f.order_item_id,

@@ -1,7 +1,7 @@
 models:
   - name: rpt_sales
     description: >
-      One-big-table for Looker Studio: fct_order_items joined to its dimensions.
+      One-big-table for Data Studio (formerly Looker Studio): fct_order_items joined to its dimensions.
       Not a star-schema member; contract not enforced.
     config:
       contract:
