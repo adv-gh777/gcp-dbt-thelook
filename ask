@@ -2,7 +2,8 @@
 # Ask the analytics agent a question about the mart layer.
 #   ./ask "What was revenue by month in 2025?"
 #   ./ask --json "..."   # structured JSON (used by the eval harness)
-# Runs Claude Code headless (`claude -p`) on YOUR Claude subscription login.
+#   ./ask --chat ["..."] # interactive conversation with the same guardrails
+# Runs Claude Code (`claude -p`, or interactive for --chat) on YOUR Claude subscription login.
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -22,9 +23,13 @@ if [[ "$auth_method" != "claude.ai" ]]; then
 fi
 [[ -x bin/toolbox ]] || { echo "ERROR: run agent/install-toolbox.sh first." >&2; exit 1; }
 
-json=0
-if [[ "${1:-}" == "--json" ]]; then json=1; shift; fi
-question="${*:?Usage: ./ask [--json] \"question\"}"
+mode=ask
+case "${1:-}" in
+  --json) mode=json; shift ;;
+  --chat) mode=chat; shift ;;
+esac
+question="${*:-}"
+[[ -n "$question" || $mode == chat ]] || { echo 'Usage: ./ask [--json|--chat] "question"' >&2; exit 1; }
 
 system_prompt="$(
   sed -e "s/{{PROJECT}}/${GCP_PROJECT}/g" -e "s/{{TODAY}}/$(date +%F)/g" agent/system_prompt.md
@@ -34,7 +39,6 @@ system_prompt="$(
 )"
 
 args=(
-  -p "$question"
   --model "${AGENT_MODEL:-sonnet}"
   --system-prompt "$system_prompt"
   --restricted                      # ignore user/project settings; no code-running tools
@@ -43,11 +47,13 @@ args=(
   --allowedTools "mcp__bigquery__execute_sql"
   --permission-mode dontAsk         # anything not allow-listed is denied
   --settings agent/settings.json    # PreToolUse guard + query log
-  --no-session-persistence
   --disable-slash-commands
 )
-if [[ $json == 1 ]]; then
-  args+=(--output-format json --json-schema "$(cat eval/answer_schema.json)"
-         --allowedTools "StructuredOutput")   # internal tool that returns the JSON answer
-fi
+case $mode in
+  ask)  args=(-p "$question" --no-session-persistence "${args[@]}") ;;
+  json) args=(-p "$question" --no-session-persistence "${args[@]}" --output-format json
+               --json-schema "$(cat eval/answer_schema.json)"
+               --allowedTools "StructuredOutput") ;;  # internal tool that returns the JSON answer
+  chat) [[ -n "$question" ]] && args=("$question" "${args[@]}") ;;  # optional opening question
+esac
 exec claude "${args[@]}"

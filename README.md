@@ -113,7 +113,9 @@ Open-source MetricFlow compiles metrics to SQL locally (`mf query`). The hosted 
 
 ## Analytics agent
 
-`./ask "What was revenue by month in 2025?"` answers business questions in natural language by querying the mart layer.
+`./ask "What was revenue by month in 2025?"` answers business questions in natural language by querying the mart layer. `./ask --chat` opens an interactive conversation with the same system prompt, tool and guardrails, so you can ask follow-up questions in one session.
+
+A plain `claude` session in this folder can also use the BigQuery server from `.mcp.json`, and Toolbox and IAM still keep it read-only on `mart`. That session doesn't get the metric context, the guard hook or the query log, though, and it keeps Claude Code's other tools, including a shell running as you. Use `./ask` for the governed agent.
 
 - **Runtime:** [`ask`](ask) runs Claude Code headless (`claude -p`) with a focused system prompt.
 - **Data access:** the agent's only tool is BigQuery `execute_sql`, served by Google's MCP Toolbox for Databases. It is configured in the project's [`.mcp.json`](.mcp.json) and [`agent/tools.yaml`](agent/tools.yaml).
@@ -216,6 +218,7 @@ Agent and evals (requires the [Claude Code](https://docs.claude.com/en/docs/clau
 unset ANTHROPIC_API_KEY             # ask refuses to run if it is set
 agent/install-toolbox.sh            # pinned MCP Toolbox binary into ./bin (gitignored), checksum-verified
 ./ask "What were the top 5 product categories by revenue in 2025?"
+./ask --chat                        # interactive, same guardrails (exit with Ctrl+D)
 
 python eval/run_eval.py --refresh-expected   # after a new dbt build
 python eval/run_eval.py --label myrun        # about 4 minutes for 25 questions
